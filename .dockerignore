@@ -1,0 +1,34 @@
+# Node.js
+node_modules/
+dist/
+*.log
+
+# Docker
+.dockerignore
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# Tests
+coverage/
+test/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Documentation
+README.md
+*.md
+
+# Configuration files
+.eslintrc.js
+.prettierrc
+tsconfig.build.json
+
