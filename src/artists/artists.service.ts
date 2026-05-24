@@ -42,4 +42,3 @@ export class ArtistsService {
     await this.artistsRepository.remove(artist);
   }
 }
-

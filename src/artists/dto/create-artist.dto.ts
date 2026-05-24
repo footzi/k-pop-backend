@@ -24,4 +24,3 @@ export class CreateArtistDto {
   @IsUrl()
   imageUrl?: string;
 }
-

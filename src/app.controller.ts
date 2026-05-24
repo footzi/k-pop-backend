@@ -1,9 +1,16 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Post } from '@nestjs/common';
 import { AppService } from './app.service';
-import collections from './data/collections.json';
-import products from './data/products.json';
+import collections from '../in-sales-response/collections.json';
+import products from '../in-sales-response//products.json';
 import { COLLECTION_IMAGES } from '@/data/images';
-import { labels } from './data/labels';
+import { Labels } from './data/labels';
+
+export interface IRawProduct {
+  created_at: string;
+  variants: {
+    quantity: number;
+  }[];
+}
 
 @Controller()
 export class AppController {
@@ -72,6 +79,23 @@ export class AppController {
 
   @Get('products')
   getProducts(): any {
+    const rawProducts = products as IRawProduct[];
+
+    const sortedProducts = rawProducts.sort((a, b) => {
+      const aInStock = a.variants.some(
+        (variant) => variant.quantity === null || variant.quantity > 0,
+      );
+      const bInStock = b.variants.some(
+        (variant) => variant.quantity === null || variant.quantity > 0,
+      );
+
+      if (aInStock !== bInStock) {
+        return aInStock ? -1 : 0;
+      }
+
+      return a.created_at > b.created_at ? -1 : 0;
+    });
+
     const normalizeImage = (image) => {
       return {
         url: image.medium_url,
@@ -85,22 +109,34 @@ export class AppController {
     };
 
     const normalizeVariant = (variant) => {
+      const price = Number(variant.price);
+      const oldPrice = variant.old_price ? Number(variant.old_price) : null;
+      const hasOldPrice = oldPrice && price !== oldPrice;
+
+      const differencePercent = hasOldPrice
+        ? ((price - oldPrice) / oldPrice) * 100
+        : null;
+      const label = differencePercent
+        ? Labels.getSaleLabel(Math.round(differencePercent))
+        : null;
+
       return {
         id: variant.id,
         title: variant.title,
-        costPrice: variant.cost_price,
-        basePrice: variant.base_price,
+        price,
+        oldPrice: hasOldPrice ? oldPrice : null,
         optionValues: variant.option_values.map((option) => ({
           id: option.id,
           title: option.title,
         })),
         quantity: variant.quantity,
+        label,
       };
     };
 
     const normalizeProduct = (product) => {
       const characteristic = product.characteristics[0];
-      const label = labels[characteristic?.permalink];
+      const label = Labels.getLabelColor(characteristic?.permalink);
 
       return {
         id: product.id,
@@ -109,6 +145,7 @@ export class AppController {
         images: product.images.map(normalizeImage),
         characteristics: product.characteristics.map(normalizeCharacteristics),
         variants: product.variants.map(normalizeVariant),
+        description: product.description,
         label: label
           ? {
               text: characteristic.title,
@@ -118,6 +155,6 @@ export class AppController {
       };
     };
 
-    return products.map(normalizeProduct);
+    return sortedProducts.map(normalizeProduct);
   }
 }

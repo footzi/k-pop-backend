@@ -11,4 +11,3 @@ import { Artist } from './entities/artist.entity';
   exports: [ArtistsService],
 })
 export class ArtistsModule {}
-

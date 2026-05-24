@@ -32,4 +32,3 @@ export class Artist {
   @UpdateDateColumn()
   updatedAt: Date;
 }
-
